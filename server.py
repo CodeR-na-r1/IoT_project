@@ -2,54 +2,31 @@
 
 # start server -> uvicorn server:app --host 192.168.0.15
 
+# for connect to server as espBeacon -> var ws = new WebSocket(`ws://192.168.0.15:8000/esp/YOUR_SSID_ID_ESP`);
+
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from BeaconConnectionManager import BeaconConnectionManager, BeaconConnectionManagerException
+from Console_colors import bcolors
 
 
 app = FastAPI()
-
-class BeaconConnectionManagerException(Exception):
-    ...
-
-class BeaconConnectionManager:
-    
-    from enum import Enum
-    class MODES(Enum):
-        ACTIVATE = "1"
-        DEACTIVATE = "2"
-
-
-    def __init__(self):
-        self.active_connections: dict[str, WebSocket] = {}  # ~? annotation
-
-    async def connect(self, websocket: WebSocket, wifi_SSID: str):
-        await websocket.accept()
-        self.active_connections[wifi_SSID] = websocket
-
-    def disconnect(self, wifi_SSID: str):
-        del self.active_connections[wifi_SSID]
-
-    async def notifyBeacon(self, wifi_SSID: str, color: str, isActivateIntent: bool):
-        data_mode: str = (self.MODES.ACTIVATE if isActivateIntent else self.MODES.DEACTIVATE).value
-
-        data = {"mode" : data_mode, "color" : color}
-
-        try:
-            await self.active_connections[wifi_SSID].send_json(data)
-        except KeyError:
-            BeaconConnectionManagerException(f"WiFi beacon with {wifi_SSID} not found!")
-        except Exception:
-            BeaconConnectionManagerException(f"error sending data to {wifi_SSID}")
 
 
 beacon_manager = BeaconConnectionManager()
 
 
 @app.websocket("/esp/{WiFiSSID}")
-async def websocket_endpoint(websocket: WebSocket, WiFi_SSID: str):
-    await beacon_manager.connect(websocket, WiFi_SSID)
+async def websocket_endpoint(websocket: WebSocket, WiFiSSID: str):
     try:
+        await beacon_manager.connect(websocket, WiFiSSID)
+
+        print(f"{bcolors.OKGREEN}Connected: {beacon_manager.clientsCount} beacons{bcolors.ENDC}")
+
         while True:
             data = await websocket.receive_text()   # просто поддерживаем подключение, общение в EspConnectionManager
-            print(f"{WiFi_SSID} -> {data}")
+            print(f"{WiFiSSID} -> {data}")
+    except BeaconConnectionManagerException as e:
+        print(f"{bcolors.FAIL}{e}{bcolors.ENDC}")
     except WebSocketDisconnect:
-        beacon_manager.disconnect(websocket)
+        await beacon_manager.disconnect(WiFiSSID)
+        print(f"{bcolors.OKGREEN}Connected: {beacon_manager.clientsCount} beacons{bcolors.ENDC}")
