@@ -16,6 +16,7 @@
 bool isError = false;
 
 ConfigManager configManager;
+WebSocketsManager webSocketsManager("", "", 8000);
 
 // Config data
 
@@ -30,7 +31,7 @@ void setup() {
 
   // Check config and load
 
-  if (configManager.hasConfig()==false) {
+  if (configManager.hasConfig()) {
     Serial.println("\nConfig load");
     configManager.loadConfig();
     Serial.println("\nConfig loaded");
@@ -51,12 +52,13 @@ void setup() {
 
     if (wifiManager.isConnected()) {
       Serial.println("Create websocket");
-      WebSocketsManager webSocketsManager(host, "/esp/reallyESP", port);  // ?path see on server
+      webSocketsManager = WebSocketsManager(host, "/esp/reallyESP", port);  // ?path see on server
 
       int retVal = webSocketsManager.connect(true);
       Serial.print("webSocketsManager.connect returns ->");
       Serial.println(retVal);
       webSocketsManager.sendData("1234");
+      //delay(30000);
     } else {
       isError = true;
     }
@@ -91,7 +93,6 @@ void loop() {}
 
 void serverCallback(String __wifi, String __password, String __host, int __port) {
   configManager.saveConfig(__wifi, __password, __host, __port);
-  Serial.println(__port);
   Serial.println("Esp wil be restarted");
   ESP.restart();
 }
