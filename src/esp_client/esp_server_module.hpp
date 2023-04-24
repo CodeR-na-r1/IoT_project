@@ -28,9 +28,9 @@ AsyncWebServer server(80);
 
 void (*userCallback)(String, String) = nullptr;
 
-IPAddress local_IP(192,168,4,22);
-IPAddress gateway(192,168,4,9);
-IPAddress subnet(255,255,255,0);
+IPAddress local_IP(192, 168, 4, 22);
+IPAddress gateway(192, 168, 4, 9);
+IPAddress subnet(255, 255, 255, 0);
 
 String html = "";
 
@@ -42,6 +42,10 @@ int max_attempts = 20;
 
 String wifiSSID = "";
 String password = "01234567";
+
+void setPassword(String _password) {
+  password = _password;
+}
 
 void setUserCallback(void (*_userCallback)(String, String)) {
   userCallback = _userCallback;
@@ -100,7 +104,7 @@ void processsingPostReq(AsyncWebServerRequest *request) {
     request->send(200, "text/plain", "Error with password field!");
     return;
   }
-  
+
   request->send(200, "text/plain", "Succesfull!");
   delay(2000);
 
@@ -115,13 +119,25 @@ void processsingPostReq(AsyncWebServerRequest *request) {
 int start() {
   Serial.println("Starting server...");
 
+  int retValue = 0;
+
   Serial.print("WiFi.softAPConfig -> ");
-  Serial.println(WiFi.softAPConfig(local_IP, gateway, subnet) ? "Ready" : "Failed!");
-  
+  if (WiFi.softAPConfig(local_IP, gateway, subnet)) {
+    Serial.println("Ready");
+  } else {
+    Serial.println("Failed!");
+    retValue = 1;
+  }
+
   wifiSSID = "ESP_" + WiFi.macAddress();
-  
+
   Serial.print("WiFi.softAP -> ");
-  Serial.println(WiFi.softAP(wifiSSID, password, channel, hidden, max_connections) ? "Ready" : "Failed!");
+  if (WiFi.softAP(wifiSSID, password, channel, hidden, max_connections)) {
+    Serial.println("Ready");
+  } else {
+    Serial.println("Failed!");
+    retValue = 2;
+  }
 
   initHTML();
   server.onNotFound(notFound);
@@ -129,10 +145,10 @@ int start() {
   server.on("/commitData", HTTP_POST, processsingPostReq);
 
   server.begin();
-  
+
   Serial.println("Server started!");
 
-  return 0;
+  return retValue;
 }
 
 }
