@@ -16,6 +16,10 @@ class ConfigManager {
 
   String password = "";
 
+  String host = "";
+
+  int port = 0;
+
 public:
   ConfigManager() {
     EEPROM.begin(4096);
@@ -44,20 +48,42 @@ public:
 
     for (int i(0); i < passwordSize; i++) {
       password += char(EEPROM.read(addr++));
+    }    
+    
+    int hostSize = EEPROM.read(addr++);
+
+    host = "";
+    host.reserve(hostSize);
+
+    for (int i(0); i < hostSize; i++) {
+      host += char(EEPROM.read(addr++));
     }
+    
+    port = (EEPROM.read(addr++) & 0xFF) << 24;
+    port = port | ((EEPROM.read(addr++) & 0xFF) << 16);
+    port = port | ((EEPROM.read(addr++) & 0xFF) << 8);
+    port = port | (EEPROM.read(addr++) & 0xFF);
 
     return;
   }
 
   String getPassword() {
-    return password;
+    return this->password;
   }
 
   String getWiFiSSID() {
-    return wifiSSID;
+    return this->wifiSSID;
   }
 
-  void saveConfig(String _WiFiSSID, String _password) {
+  String getHost() {
+    return this->host;
+  }
+
+  int getPort() {
+    return this->port;
+  }
+
+  void saveConfig(String _WiFiSSID, String _password, String _host, int _port) {
     addr = START_ADDRESS + 1;
     
     if (!this->hasConfig()) {
@@ -75,6 +101,17 @@ public:
     for (int i(0); i < _password.length(); i++) {
       EEPROM.write(addr++, _password[i]);
     }
+    
+    EEPROM.write(addr++, _host.length() & 0xFF);
+
+    for (int i(0); i < _host.length(); i++) {
+      EEPROM.write(addr++, _host[i]);
+    }
+    
+    EEPROM.write(addr++, (_port & 0xFF000000) >> 24);
+    EEPROM.write(addr++, (_port & 0x00FF0000) >> 16);
+    EEPROM.write(addr++, (_port & 0x0000FF00) >> 8);
+    EEPROM.write(addr++, _port & 0x000000FF);
 
     EEPROM.commit();
 

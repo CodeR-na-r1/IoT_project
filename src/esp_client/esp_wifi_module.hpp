@@ -1,8 +1,8 @@
 #ifndef WIFI_MODULE
 #define WIFI_MODULE
 
-#ifndef WIFI_LIB
-#define WIFI_LIB
+#ifndef ESP8266WiFi_LIB
+#define ESP8266WiFi_LIB
 #include <ESP8266WiFi.h>
 #endif
 
@@ -41,7 +41,7 @@ public:
 
     if (withOutputLogs) {
       if (this->isConnected()) {
-        Serial.print("Successfully connected to ");
+        Serial.print("\nSuccessfully connected to ");
         Serial.println(this->wifiSSID);
         Serial.print("IP Address: ");
         Serial.println(this->getlocalIP());
@@ -51,7 +51,7 @@ public:
     }
   }
 
-  bool isConnected() {
+  static bool isConnected() {
     return WiFi.status() == WL_CONNECTED;
   }
 

@@ -1,3 +1,4 @@
+#include <cstddef>
 #ifndef SERVER_MODULE
 #define SERVER_MODULE
 
@@ -26,7 +27,12 @@ namespace SERVER_NAMESPACE {
 
 AsyncWebServer server(80);
 
-void (*userCallback)(String, String) = nullptr;
+void (*userCallback)(String, String, String, int) = nullptr;
+
+String data_wifiSSID = "";
+String data_password = "";
+String data_host = "";
+int data_port = 80;
 
 IPAddress local_IP(192, 168, 4, 22);
 IPAddress gateway(192, 168, 4, 9);
@@ -47,10 +53,17 @@ void setPassword(String _password) {
   password = _password;
 }
 
-void setUserCallback(void (*_userCallback)(String, String)) {
+void setUserCallback(void (*_userCallback)(String, String, String, int)) {
   userCallback = _userCallback;
 
   return;
+}
+
+void setData(String _wifi, String _password, String _host, int _port) {
+  data_wifiSSID = _wifi;
+  data_password = _password;
+  data_host = _host;
+  data_port = _port;
 }
 
 void initHTML() {
@@ -67,11 +80,35 @@ void initHTML() {
   html += "<form method=\"POST\" action=\"commitData\">\n";
   html += "<p>\n";
   html += "<label for=\"SSID\">SSID:</label>\n";
-  html += "<input type=\"text\" name=\"SSID\" required>\n";
+
+  html += "<input type=\"text\" name=\"SSID\" value=\"";
+  html +=  data_wifiSSID;
+  html += "\" required>\n";
+
   html += "</p>\n";
   html += "<p>\n";
   html += "<label for=\"password\">Password:</label>\n";
-  html += "<input type=\"password\" name=\"password\" required>\n";
+  
+  html += "<input type=\"text\" name=\"password\" value=\"";
+  html += data_password;
+  html += "\" required>\n";
+  
+  html += "</p>\n";
+  html += "<p>\n";
+  html += "<label for=\"host\">Host ip:</label>\n";
+
+  html += "<input type=\"text\" name=\"host\" value=\"";
+  html += data_host;
+  html += "\" required>\n";
+
+  html += "</p>\n";
+  html += "<p>\n";
+  html += "<label for=\"port\">Port:</label>\n";
+
+  html += "<input type=\"text\" name=\"port\" value=\"";
+  html += data_port;
+  html += "\" required>\n";
+  
   html += "</p>\n";
   html += "<button type=\"submit\">Commit</button>";
   html += "</form>\n";
@@ -88,20 +125,32 @@ void mainPage(AsyncWebServerRequest *request) {
 }
 
 void processsingPostReq(AsyncWebServerRequest *request) {
-  String _wifiSSID;
-  String _password;
 
   if (request->hasParam("SSID", true)) {
-    _wifiSSID = request->getParam("SSID", true)->value();
+    data_wifiSSID = request->getParam("SSID", true)->value();
   } else {
     request->send(200, "text/plain", "Error with SSID field!");
     return;
   }
 
   if (request->hasParam("password", true)) {
-    _password = request->getParam("password", true)->value();
+    data_password = request->getParam("password", true)->value();
   } else {
     request->send(200, "text/plain", "Error with password field!");
+    return;
+  }
+
+  if (request->hasParam("host", true)) {
+    data_host = request->getParam("host", true)->value();
+  } else {
+    request->send(200, "text/plain", "Error with host field!");
+    return;
+  }
+
+  if (request->hasParam("port", true)) {
+    data_port = request->getParam("port", true)->value().toInt();
+  } else {
+    request->send(200, "text/plain", "Error with port field!");
     return;
   }
 
@@ -109,7 +158,7 @@ void processsingPostReq(AsyncWebServerRequest *request) {
   delay(2000);
 
   if (userCallback != nullptr) {
-    userCallback(_wifiSSID, _password);
+    userCallback(data_wifiSSID, data_password, data_host, data_port);
     Serial.println("_userCallback called");
   } else {
     Serial.println("_userCallback is nullpointer");
