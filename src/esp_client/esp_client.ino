@@ -2,9 +2,6 @@
 
 // Сначало заголовки библиотек
 
-#include <ESP8266WiFi.h>      // ?
-#include <WebSocketClient.h>  // ?
-
 // Затем заголовки модулей скетча
 
 #include "esp_epprom_module.hpp"
@@ -29,41 +26,57 @@ int port = 8000;
 void setup() {
   Serial.begin(115200);
 
-  // Check config and load
+  // Check failures
 
-  if (configManager.hasConfig()) {
-    Serial.println("\nConfig load");
-    configManager.loadConfig();
-    Serial.println("\nConfig loaded");
+  configManager.commitStartSystem();
 
-    wifiSSID = configManager.getWiFiSSID();
-    password = configManager.getPassword();
-    host = configManager.getHost();
-    port = configManager.getPort();
-    Serial.println("\nConfig getting");
-    Serial.println(wifiSSID);
-    Serial.println(password);
-    Serial.println(host);
-    Serial.println(port);
+  Serial.print("FailureCounter -> ");
+  Serial.println(configManager.getFailureCounter());
 
-    // Try and Connect to the Network
-    WiFiManager wifiManager(wifiSSID, password, 20);
-    wifiManager.connect(true);
+  if (!configManager.isFailure()) {
 
-    if (wifiManager.isConnected()) {
-      Serial.println("Create websocket");
-      webSocketsManager = WebSocketsManager(host, "/esp/reallyESP", port);  // ?path see on server
+    // Check config and load
 
-      int retVal = webSocketsManager.connect(true);
-      Serial.print("webSocketsManager.connect returns ->");
-      Serial.println(retVal);
-      webSocketsManager.sendData("1234");
-      //delay(30000);
+    if (configManager.hasConfig()) {
+      Serial.println("\nConfig load");
+      configManager.loadConfig();
+      Serial.println("\nConfig loaded");
+
+      wifiSSID = configManager.getWiFiSSID();
+      password = configManager.getPassword();
+      host = configManager.getHost();
+      port = configManager.getPort();
+      Serial.println("\nConfig getting");
+      Serial.println(wifiSSID);
+      Serial.println(password);
+      Serial.println(host);
+      Serial.println(port);
+
+      // Try and Connect to the Network
+      WiFiManager wifiManager(wifiSSID, password, 20);
+      wifiManager.connect(true);
+
+      if (wifiManager.isConnected()) {
+        Serial.println("Create websocket");
+        webSocketsManager = WebSocketsManager(host, "/esp/reallyESP", port);  // ?path see on server
+
+        int retVal = webSocketsManager.connect(true);
+        Serial.print("webSocketsManager.connect returns -> ");
+        Serial.println(retVal);
+
+        webSocketsManager.sendData("1234");
+        //delay(30000);
+
+        configManager.commitSuccessfulStartSystem();
+      } else {
+        isError = true;
+      }
     } else {
+      Serial.println("\nConfig not found");
       isError = true;
     }
   } else {
-    Serial.println("\nConfig not found");
+    Serial.println("Failure system!");
     isError = true;
   }
 
@@ -81,7 +94,9 @@ void setup() {
       Serial.println("Server started;");
 
       SERVER_NAMESPACE::setUserCallback(serverCallback);
-      Serial.print("setUserCallback is set");
+      Serial.println("setUserCallback is set");
+
+      configManager.commitSuccessfulStartSystem();
     } else {
       Serial.print("Server started, with error, retValue -> ");
       Serial.println(ret);

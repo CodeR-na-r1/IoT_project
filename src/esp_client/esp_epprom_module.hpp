@@ -8,6 +8,12 @@
 
 #define START_ADDRESS 0
 
+#define OFFSET__IS_CONFIG__ADDRESS 0
+#define OFFSET__STATUS_FAILURE__ADDRESS 1
+#define OFFSET__CONFIG_DATA__ADDRESS 2
+
+#define MAX_COUNTER_FAILURE 3
+
 class ConfigManager {
 
   int addr = START_ADDRESS;
@@ -26,11 +32,35 @@ public:
   }
 
   bool hasConfig() {
-    return bool(EEPROM.read(START_ADDRESS));
+    return bool(EEPROM.read(START_ADDRESS + OFFSET__IS_CONFIG__ADDRESS));
+  }
+
+  void commitStartSystem() {
+    int failureCounter = EEPROM.read(START_ADDRESS + OFFSET__STATUS_FAILURE__ADDRESS);
+
+    EEPROM.write(START_ADDRESS + OFFSET__STATUS_FAILURE__ADDRESS, ++failureCounter);
+    EEPROM.commit();
+
+    return;
+  }
+
+  void commitSuccessfulStartSystem() {
+    EEPROM.write(START_ADDRESS + OFFSET__STATUS_FAILURE__ADDRESS, 0);
+    EEPROM.commit();
+
+    return;
+  }
+
+  bool isFailure() {
+    return EEPROM.read(START_ADDRESS + OFFSET__STATUS_FAILURE__ADDRESS) >= MAX_COUNTER_FAILURE;
+  }
+
+  uint8_t getFailureCounter() {
+    return EEPROM.read(START_ADDRESS + OFFSET__STATUS_FAILURE__ADDRESS);
   }
 
   void loadConfig() {
-    addr = START_ADDRESS + 1;
+    addr = START_ADDRESS + OFFSET__CONFIG_DATA__ADDRESS;
 
     int ssidSize = EEPROM.read(addr++);
 
@@ -48,8 +78,8 @@ public:
 
     for (int i(0); i < passwordSize; i++) {
       password += char(EEPROM.read(addr++));
-    }    
-    
+    }
+
     int hostSize = EEPROM.read(addr++);
 
     host = "";
@@ -58,7 +88,7 @@ public:
     for (int i(0); i < hostSize; i++) {
       host += char(EEPROM.read(addr++));
     }
-    
+
     port = (EEPROM.read(addr++) & 0xFF) << 24;
     port = port | ((EEPROM.read(addr++) & 0xFF) << 16);
     port = port | ((EEPROM.read(addr++) & 0xFF) << 8);
@@ -84,10 +114,10 @@ public:
   }
 
   void saveConfig(String _WiFiSSID, String _password, String _host, int _port) {
-    addr = START_ADDRESS + 1;
-    
+    addr = START_ADDRESS + OFFSET__CONFIG_DATA__ADDRESS;
+
     if (!this->hasConfig()) {
-      EEPROM.write(START_ADDRESS, 1);
+      EEPROM.write(START_ADDRESS + OFFSET__IS_CONFIG__ADDRESS, 1);
     }
 
     EEPROM.write(addr++, _WiFiSSID.length() & 0xFF);
@@ -101,13 +131,13 @@ public:
     for (int i(0); i < _password.length(); i++) {
       EEPROM.write(addr++, _password[i]);
     }
-    
+
     EEPROM.write(addr++, _host.length() & 0xFF);
 
     for (int i(0); i < _host.length(); i++) {
       EEPROM.write(addr++, _host[i]);
     }
-    
+
     EEPROM.write(addr++, (_port & 0xFF000000) >> 24);
     EEPROM.write(addr++, (_port & 0x00FF0000) >> 16);
     EEPROM.write(addr++, (_port & 0x0000FF00) >> 8);
