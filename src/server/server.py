@@ -73,14 +73,14 @@ async def websocket_endpoint(websocket: WebSocket):
                     try:
                         beacon_manager.notifyBeacon(data["beaconId"], color, True)
                         await websocket.send_json({"status" : "OK"})
-                    except:
-                        await websocket.send_json({"status" : "ERROR"})
+                    except Exception as e:
+                        await websocket.send_json({"status" : "ERROR", "description" : f"{e}"})
                 elif data["intent"] == "deactivateBeacon":
                     try:
                         beacon_manager.notifyBeacon(data["beaconId"], color, False)
                         await websocket.send_json({"status" : "OK"})
-                    except:
-                        await websocket.send_json({"status" : "ERROR"})
+                    except Exception as e:
+                        await websocket.send_json({"status" : "ERROR", "description" : f"{e}"})
 
     except ValueError:
         await websocket.accept()
