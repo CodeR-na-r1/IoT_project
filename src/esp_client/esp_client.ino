@@ -64,17 +64,31 @@ void setup() {
 
       if (wifiManager.isConnected()) {
         Serial.println("Create websocket");
-        webSocketsManager = WebSocketsManager(host, "/esp/reallyESP", port);  // ?path see on server
+        webSocketsManager = WebSocketsManager(host, "/esp/" + WIFI_AP_NAMESPACE::wifiSSID, port);  // ?path see on server
 
         int retVal = webSocketsManager.connect(true);
         Serial.print("webSocketsManager.connect returns -> ");
         Serial.println(retVal);
 
-        webSocketsManager.sendData("1234");
-        //delay(30000);
+        if (retVal == 0) {
+          Serial.println("webSockets created!");
 
-        configManager.commitSuccessfulStartSystem();
+          if (WIFI_AP_NAMESPACE::start() == 0) {
+            Serial.println("WIFI AP created");
+            Serial.println("Esp beacon ready for work!");
+            configManager.commitSuccessfulStartSystem();
+          } else {
+            Serial.println("Wifi AP created error!");
+            errorDescription = "Wifi AP created error";
+            isError = true;
+          }
+        } else {
+          Serial.println("WebSockets created error!");
+          errorDescription = "WebSockets created error";
+          isError = true;
+        }
       } else {
+        Serial.println("Wifi no connected! Check data for remote wifi ap (SSID and password)");
         errorDescription = "Wifi no connected! Check data for remote wifi ap (SSID and password)";
         isError = true;
       }
@@ -105,8 +119,6 @@ void setup() {
 
       SERVER_NAMESPACE::setUserCallback(serverCallback);
       Serial.println("setUserCallback is set");
-
-      configManager.commitSuccessfulStartSystem();
     } else {
       Serial.print("Server started, with error, retValue -> ");
       Serial.println(ret);
@@ -114,10 +126,16 @@ void setup() {
   }
 }
 
-void loop() {}
+void loop() {
+  if (!isError) {
+    webSocketsManager.sendData("1234");
+    delay(5000);
+  }
+}
 
 void serverCallback(String __wifi, String __password, String __host, int __port) {
   configManager.saveConfig(__wifi, __password, __host, __port);
+  configManager.commitSuccessfulStartSystem();
   Serial.println("Esp wil be restarted");
   ESP.restart();
 }
