@@ -3,6 +3,10 @@
 #define SERVER_MODULE
 
 
+#ifndef WIFI_MODULE
+#include "esp_wifi_module.hpp"
+#endif
+
 #ifndef Arduino_LIB
 #define Arduino_LIB
 #include <Arduino.h>
@@ -34,24 +38,11 @@ String data_password = "";
 String data_host = "";
 int data_port = 80;
 
-IPAddress local_IP(192, 168, 4, 22);
-IPAddress gateway(192, 168, 4, 9);
-IPAddress subnet(255, 255, 255, 0);
+String errorDescription = "";
 
 String html = "";
 
-int max_connections = 8;
-int channel = 1;
-bool hidden = false;
-
 int max_attempts = 20;
-
-String wifiSSID = "";
-String password = "01234567";
-
-void setPassword(String _password) {
-  password = _password;
-}
 
 void setUserCallback(void (*_userCallback)(String, String, String, int)) {
   userCallback = _userCallback;
@@ -64,6 +55,10 @@ void setData(String _wifi, String _password, String _host, int _port) {
   data_password = _password;
   data_host = _host;
   data_port = _port;
+}
+
+void setErrorDescription(String _errorDescription) {
+  errorDescription = _errorDescription;
 }
 
 void initHTML() {
@@ -82,17 +77,17 @@ void initHTML() {
   html += "<label for=\"SSID\">SSID:</label>\n";
 
   html += "<input type=\"text\" name=\"SSID\" value=\"";
-  html +=  data_wifiSSID;
+  html += data_wifiSSID;
   html += "\" required>\n";
 
   html += "</p>\n";
   html += "<p>\n";
   html += "<label for=\"password\">Password:</label>\n";
-  
+
   html += "<input type=\"text\" name=\"password\" value=\"";
   html += data_password;
   html += "\" required>\n";
-  
+
   html += "</p>\n";
   html += "<p>\n";
   html += "<label for=\"host\">Host ip:</label>\n";
@@ -108,10 +103,18 @@ void initHTML() {
   html += "<input type=\"text\" name=\"port\" value=\"";
   html += data_port;
   html += "\" required>\n";
-  
+
   html += "</p>\n";
   html += "<button type=\"submit\">Commit</button>";
   html += "</form>\n";
+
+  html += "<div>\n";
+  if (errorDescription != "") {
+    html += "<p>Last error -> ";
+    html += errorDescription;
+    html += "</p>";
+  }
+  html += "</div>\n";
 
   html += "</body>\n";
 }
@@ -168,25 +171,7 @@ void processsingPostReq(AsyncWebServerRequest *request) {
 int start() {
   Serial.println("Starting server...");
 
-  int retValue = 0;
-
-  Serial.print("WiFi.softAPConfig -> ");
-  if (WiFi.softAPConfig(local_IP, gateway, subnet)) {
-    Serial.println("Ready");
-  } else {
-    Serial.println("Failed!");
-    retValue = 1;
-  }
-
-  wifiSSID = "ESP_" + WiFi.macAddress();
-
-  Serial.print("WiFi.softAP -> ");
-  if (WiFi.softAP(wifiSSID, password, channel, hidden, max_connections)) {
-    Serial.println("Ready");
-  } else {
-    Serial.println("Failed!");
-    retValue = 2;
-  }
+  int retValue = WIFI_AP_NAMESPACE::start();
 
   initHTML();
   server.onNotFound(notFound);

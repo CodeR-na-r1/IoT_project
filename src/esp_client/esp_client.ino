@@ -12,11 +12,12 @@
 #include "esp_led_module.hpp"
 #include "esp_webSockets_module.hpp"
 
+String errorDescription = "";
 bool isError = false;
 
 ConfigManager configManager;
 WebSocketsManager webSocketsManager("", "", 8000);
-std::vector<int> colorsData;
+// std::vector<int> colorsData;
 
 // Config data
 
@@ -29,31 +30,33 @@ int port = 8000;
 void setup() {
   Serial.begin(115200);
 
-  // Check failures
+  // colorsData.reserve(10);
 
-  configManager.commitStartSystem();
+  // Check config and load
 
-  Serial.print("FailureCounter -> ");
-  Serial.println(configManager.getFailureCounter());
+  if (configManager.hasConfig()) {
+    Serial.println("\nConfig load");
+    configManager.loadConfig();
+    Serial.println("\nConfig loaded");
 
-  if (!configManager.isFailure()) {
+    wifiSSID = configManager.getWiFiSSID();
+    password = configManager.getPassword();
+    host = configManager.getHost();
+    port = configManager.getPort();
+    Serial.println("\nConfig getting");
+    Serial.println(wifiSSID);
+    Serial.println(password);
+    Serial.println(host);
+    Serial.println(port);
 
-    // Check config and load
+    // Check failures
 
-    if (configManager.hasConfig()) {
-      Serial.println("\nConfig load");
-      configManager.loadConfig();
-      Serial.println("\nConfig loaded");
+    configManager.commitStartSystem();
 
-      wifiSSID = configManager.getWiFiSSID();
-      password = configManager.getPassword();
-      host = configManager.getHost();
-      port = configManager.getPort();
-      Serial.println("\nConfig getting");
-      Serial.println(wifiSSID);
-      Serial.println(password);
-      Serial.println(host);
-      Serial.println(port);
+    Serial.print("FailureCounter -> ");
+    Serial.println(configManager.getFailureCounter());
+
+    if (!configManager.isFailure()) {
 
       // Try and Connect to the Network
       WiFiManager wifiManager(wifiSSID, password, 20);
@@ -72,14 +75,17 @@ void setup() {
 
         configManager.commitSuccessfulStartSystem();
       } else {
+        errorDescription = "Wifi no connected! Check data for remote wifi ap (SSID and password)";
         isError = true;
       }
     } else {
-      Serial.println("\nConfig not found");
+      Serial.println("Failure system!");
+      errorDescription = "Failure system! Maybe the remote server is not available";
       isError = true;
     }
   } else {
-    Serial.println("Failure system!");
+    Serial.println("\nConfig not found");
+    errorDescription = "Config not found! Save it now";
     isError = true;
   }
 
@@ -90,6 +96,7 @@ void setup() {
 
   if (isError) {
     SERVER_NAMESPACE::setData(wifiSSID, password, host, port);
+    SERVER_NAMESPACE::setErrorDescription(errorDescription);
 
     int ret = SERVER_NAMESPACE::start();
 
