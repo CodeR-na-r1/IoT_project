@@ -1,6 +1,10 @@
 # python 3.10+ fastAPIserver
 
 # start server -> uvicorn server:app --host 192.168.0.15
+# start server -> uvicorn server:app --host 192.168.0.15 --ws-ping-interval 250
+
+# fastapi ping pong -> https://codematcher.com/questions/fastapi-websocket-ping-pong-timeout
+# esp library WebSockets not supported ping pong
 
 # for connect to server as espBeacon -> var ws = new WebSocket(`ws://192.168.0.15:8000/esp/YOUR_SSID_ID_ESP`);
 
@@ -44,6 +48,7 @@ async def websocket_endpoint(websocket: WebSocket, WiFiSSID: str):
         print(f"{bcolors.OKGREEN}Connected: {beacon_manager.clientsCount} beacons{bcolors.ENDC}")
 
         while True: 
+            await websocket.send_json({"mode" : "1", "color" : "123456"})
             data = await websocket.receive_text()   # просто поддерживаем подключение, общение в EspConnectionManager
             print(f"{WiFiSSID} -> {data}")
     except BeaconConnectionManagerException as e:
@@ -71,13 +76,13 @@ async def websocket_endpoint(websocket: WebSocket):
                     await websocket.send_json({"color" : color})
                 elif data["intent"] == "activateBeacon":
                     try:
-                        beacon_manager.notifyBeacon(data["beaconId"], color, True)
+                        await beacon_manager.notifyBeacon(data["beaconId"], color, True)
                         await websocket.send_json({"status" : "OK"})
                     except Exception as e:
                         await websocket.send_json({"status" : "ERROR", "description" : f"{e}"})
                 elif data["intent"] == "deactivateBeacon":
                     try:
-                        beacon_manager.notifyBeacon(data["beaconId"], color, False)
+                        await beacon_manager.notifyBeacon(data["beaconId"], color, False)
                         await websocket.send_json({"status" : "OK"})
                     except Exception as e:
                         await websocket.send_json({"status" : "ERROR", "description" : f"{e}"})

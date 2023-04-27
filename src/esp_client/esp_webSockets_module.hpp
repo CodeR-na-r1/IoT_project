@@ -3,7 +3,7 @@
 
 #ifndef WEBSOCKETS_LIB
 #define WEBSOCKETS_LIB
-#include <WebSocketClient.h>
+#include <WebSocketClient.h>  // https://github.com/morrissinger/ESP8266-Websocket
 #endif
 
 // definitions for libraries
@@ -74,6 +74,10 @@ public:
 
   String getData() {
     return this->data;
+  }
+
+  void clearData() {
+    this->data = "";
   }
 
   void sendData(String data) {

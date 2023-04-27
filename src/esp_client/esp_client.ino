@@ -1,8 +1,10 @@
 // MAIN FILE HERE
 
+#define JSON_BUFER_CAPACITY 64
+
 // Сначало заголовки библиотек
 
-#include <vector>
+#include <ArduinoJson.h>
 
 // Затем заголовки модулей скетча
 
@@ -17,7 +19,8 @@ bool isError = false;
 
 ConfigManager configManager;
 WebSocketsManager webSocketsManager("", "", 8000);
-// std::vector<int> colorsData;
+
+DynamicJsonDocument dynamicJsonDocument(JSON_BUFER_CAPACITY);
 
 // Config data
 
@@ -29,8 +32,6 @@ int port = 8000;
 
 void setup() {
   Serial.begin(115200);
-
-  // colorsData.reserve(10);
 
   // Check config and load
 
@@ -124,12 +125,47 @@ void setup() {
       Serial.println(ret);
     }
   }
+
+  while (isError) {}
 }
 
+String jData;
+ArduinoJson::DeserializationError error;
+auto timer = millis();
+auto timer2 = millis();
+
 void loop() {
-  if (!isError) {
-    webSocketsManager.sendData("1234");
-    delay(5000);
+
+  // if (millis() - timer > 5000) {
+  //   timer = millis();
+  //   Serial.println("work");
+  // }
+
+  if (millis() - timer2 > 1000) {
+    timer2 = millis();
+    Serial.println("hasData?");
+    
+    if (webSocketsManager.hasData()) {
+      jData = webSocketsManager.getData();
+      webSocketsManager.clearData();
+      Serial.println(jData);
+
+      // Parse JSON object
+      error = deserializeJson(dynamicJsonDocument, jData);
+      if (!error) {
+        Serial.println(("Response:"));
+        Serial.println(dynamicJsonDocument["mode"].as<String>());
+        Serial.println(dynamicJsonDocument["color"].as<String>());
+        webSocketsManager.sendData("123");
+      } else {
+        Serial.println("Parsing failed!");
+      }
+    }
+
+    // if (!isError) {
+    //   webSocketsManager.sendData("1234");
+    //   delay(5000);
+    // }
   }
 }
 

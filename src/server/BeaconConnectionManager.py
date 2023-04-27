@@ -32,8 +32,8 @@ class BeaconConnectionManager:
             await self.active_connections[wifi_SSID].send_json(data)
         except KeyError:
             raise BeaconConnectionManagerException(f"WiFi beacon with {wifi_SSID} not found!")
-        except Exception:
-            raise BeaconConnectionManagerException(f"error sending data to {wifi_SSID}")
+        except Exception as e:
+            raise BeaconConnectionManagerException(f"error sending data to {wifi_SSID} ({e})")
 
     @property
     def clientsCount(self):
