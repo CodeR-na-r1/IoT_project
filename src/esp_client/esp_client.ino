@@ -2,6 +2,8 @@
 
 // Сначало заголовки библиотек
 
+#include <vector>
+
 // Затем заголовки модулей скетча
 
 #include "esp_epprom_module.hpp"
@@ -14,6 +16,7 @@ bool isError = false;
 
 ConfigManager configManager;
 WebSocketsManager webSocketsManager("", "", 8000);
+std::vector<int> colorsData;
 
 // Config data
 

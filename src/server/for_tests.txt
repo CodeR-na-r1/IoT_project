@@ -18,3 +18,35 @@ if WiFiSSID == "fff":
     await beacon_manager.notifyBeacon("ESP_GET_MESSAGE", "#FA89BC", True)
     sleep(3)
     await beacon_manager.notifyBeacon("ESP_GET_MESSAGE", "#FA89BC", False)
+
+-- js --
+ 
+var ws1 = new WebSocket(`ws://192.168.0.15:8000/android`);
+ws1.onmessage = function(event) {
+    console.log(JSON.stringify(event.data));
+    console.log(JSON.parse(event.data));
+}
+
+var ws2 = new WebSocket(`ws://192.168.0.15:8000/android`);
+ws2.onmessage = function(event) {
+    console.log(JSON.stringify(event.data));
+    console.log(JSON.parse(event.data));
+}
+
+var ws3 = new WebSocket(`ws://192.168.0.15:8000/android`);
+ws3.onmessage = function(event) {
+    console.log(JSON.stringify(event.data));
+    console.log(JSON.parse(event.data));
+}
+
+var ws4 = new WebSocket(`ws://192.168.0.15:8000/android`);
+ws4.onmessage = function(event) {
+    console.log(JSON.stringify(event.data));
+    console.log(JSON.parse(event.data));
+}
+
+var ws5 = new WebSocket(`ws://192.168.0.15:8000/android`);
+ws5.onmessage = function(event) {
+    console.log(JSON.stringify(event.data));
+    console.log(JSON.parse(event.data));
+}
