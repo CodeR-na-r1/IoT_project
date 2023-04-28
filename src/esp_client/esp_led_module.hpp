@@ -11,8 +11,11 @@
 #include <vector>
 #endif
 
-#define LED_PIN 2
-#define LED_NUM 30
+#ifndef LED_PIN
+#define LED_PIN 5  // GPIO5 -> D1
+#endif
+
+#define LED_NUM 12
 
 CRGB leds[LED_NUM];
 
@@ -38,11 +41,22 @@ public:
 class LedManager {
 
   std::vector<ColorRGB> dataColors;
+  bool isDataColorsChanged = false;
+
+  // for dynamic animation (loading)
+
+  ColorRGB foregroundColor = ColorRGB(0, 0, 0);
+  ColorRGB backgroundColor = ColorRGB(0, 0, 0);
+  int nowIndex = 0;
+  int length = 3;
+  int step = 1;
 
 public:
 
   LedManager() {
     this->dataColors.reserve(4);
+
+    pinMode(LED_PIN, OUTPUT);
 
     FastLED.addLeds<WS2812, LED_PIN, GRB>(leds, LED_NUM);
 
@@ -66,6 +80,9 @@ public:
   }
 
   void showUsers() {
+
+    if (!this->isDataColorsChanged) { return; }
+
     int step = LED_NUM / this->dataColors.size();
 
     for (int i = 0; i < this->dataColors.size(); ++i) {
@@ -111,6 +128,7 @@ public:
 
     this->dataColors.push_back(newData);
     Serial.println("Color added");
+    isDataColorsChanged = true;
 
     return;
   }
@@ -130,8 +148,44 @@ public:
 
     this->dataColors.erase(std::remove(this->dataColors.begin(), this->dataColors.end(), tempItem), this->dataColors.end());
 
+    int removedCount = this->dataColors.size() - tempSize;
+    if (removedCount != 0) { this->isDataColorsChanged = true; }
+
     Serial.print("Colors removed: ");
-    Serial.println(this->dataColors.size() - tempSize);
+    Serial.println(removedCount);
+
+    return;
+  }
+
+  void initLoadAnimation(ColorRGB _foregroundcolor, ColorRGB _backgroundColor, int _startIndex, int _length, int _step = 1) {
+    this->foregroundColor = _foregroundcolor;
+    this->backgroundColor = _backgroundColor;
+
+    this->nowIndex = _startIndex;
+    this->length = _length;
+    this->step = _step;
+
+    return;
+  }
+
+  void tickLoadAnimation() {
+    int tempIndex(0);
+
+    for (int i = 0; i < this->length; i++) {
+      tempIndex = this->nowIndex - i;
+      leds[tempIndex < 0 ? LED_NUM - (-tempIndex) : tempIndex].setRGB(this->backgroundColor.r, this->backgroundColor.g, this->backgroundColor.b);
+      leds[(this->nowIndex + i) % LED_NUM].setRGB(this->foregroundColor.r, this->foregroundColor.g, this->foregroundColor.b);
+    }
+
+    this->nowIndex = (this->nowIndex + this->step) % LED_NUM;
+
+    FastLED.show();
+
+    return;
+  }
+
+  void showColor(ColorRGB _color) {
+    FastLED.showColor(CRGB(_color.r, _color.g, _color.b));
 
     return;
   }

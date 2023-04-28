@@ -48,7 +48,7 @@ async def websocket_endpoint(websocket: WebSocket, WiFiSSID: str):
         print(f"{bcolors.OKGREEN}Connected: {beacon_manager.clientsCount} beacons{bcolors.ENDC}")
 
         while True: 
-            await websocket.send_json({"mode" : "1", "color" : {"r" : "12", "g" : "255", "b" : "123"}})
+            #await websocket.send_json({"mode" : "1", "color" : {"r" : "12", "g" : "255", "b" : "123"}})
             data = await websocket.receive_text()   # просто поддерживаем подключение, общение в EspConnectionManager
             print(f"{WiFiSSID} -> {data}")
     except BeaconConnectionManagerException as e:

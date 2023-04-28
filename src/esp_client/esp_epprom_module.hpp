@@ -28,7 +28,7 @@ class ConfigManager {
 
 public:
   ConfigManager() {
-    EEPROM.begin(4096);
+    EEPROM.begin(100);
   }
 
   bool hasConfig() {

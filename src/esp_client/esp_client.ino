@@ -1,12 +1,17 @@
 // MAIN FILE HERE
 
-#define FREQUENCY_CHECK_DATA_FROM_SERVER 1000  // ms
+#define FREQUENCY_CHECK_DATA_FROM_SERVER 10000  // ms
+
+#define FREQUENCY_UPDATE_LED_FOR_LOADING 250  // ms
+#define FREQUENCY_UPDATE_LED_FOR_WORK 45      // ms
+#define LED_PIN 5                             // GPIO5 -> D1
 
 #define JSON_BUFER_CAPACITY 256  // bytes
 
 // Сначало заголовки библиотек
 
 #include <ArduinoJson.h>
+#include <Ticker.h>  //Ticker Library
 
 // Затем заголовки модулей скетча
 
@@ -22,6 +27,7 @@ bool isError = false;
 ConfigManager configManager;
 WebSocketsManager webSocketsManager("", "", 8000);
 LedManager ledManager;
+Ticker ticker;
 
 DynamicJsonDocument dynamicJsonDocument(JSON_BUFER_CAPACITY);
 
@@ -35,6 +41,11 @@ int port = 8000;
 
 void setup() {
   Serial.begin(115200);
+
+  // Initialize Ticker
+
+  ledManager.initLoadAnimation(ColorRGB(255, 0, 0), ColorRGB(0, 0, 0), 0, 3, 1);
+  ticker.attach_ms(FREQUENCY_UPDATE_LED_FOR_LOADING, interruptFunction);
 
   // Check config and load
 
@@ -81,6 +92,9 @@ void setup() {
             Serial.println("WIFI AP created");
             Serial.println("Esp beacon ready for work!");
             configManager.commitSuccessfulStartSystem();
+            ticker.detach();
+            ledManager.initLoadAnimation(ColorRGB(0, 255, 0), ColorRGB(204, 136, 153), 0, 3, 1);
+            ticker.attach_ms(FREQUENCY_UPDATE_LED_FOR_WORK, interruptFunction);
           } else {
             Serial.println("Wifi AP created error!");
             errorDescription = "Wifi AP created error";
@@ -113,6 +127,9 @@ void setup() {
   // If isError then server up and setting esp from Web-browser on http://192.168.4.22 (before connects to the access point of the esp -> password = 01234567)
 
   if (isError) {
+    ticker.detach();
+    ledManager.showColor(ColorRGB(255, 0, 0));
+
     SERVER_NAMESPACE::setData(wifiSSID, password, host, port);
     SERVER_NAMESPACE::setErrorDescription(errorDescription);
 
@@ -189,4 +206,16 @@ void serverCallback(String __wifi, String __password, String __host, int __port)
   configManager.commitSuccessfulStartSystem();
   Serial.println("Esp wil be restarted");
   ESP.restart();
+}
+
+IRAM_ATTR void interruptFunction() {
+
+  if (ledManager.hasUsers()) {
+
+    ledManager.showUsers();
+
+  } else {
+
+    ledManager.tickLoadAnimation();
+  }
 }
