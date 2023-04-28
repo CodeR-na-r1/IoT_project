@@ -1,6 +1,8 @@
 // MAIN FILE HERE
 
-#define JSON_BUFER_CAPACITY 64
+#define FREQUENCY_CHECK_DATA_FROM_SERVER 1000  // ms
+
+#define JSON_BUFER_CAPACITY 256  // bytes
 
 // Сначало заголовки библиотек
 
@@ -19,6 +21,7 @@ bool isError = false;
 
 ConfigManager configManager;
 WebSocketsManager webSocketsManager("", "", 8000);
+LedManager ledManager;
 
 DynamicJsonDocument dynamicJsonDocument(JSON_BUFER_CAPACITY);
 
@@ -38,7 +41,7 @@ void setup() {
   if (configManager.hasConfig()) {
     Serial.println("\nConfig load");
     configManager.loadConfig();
-    Serial.println("\nConfig loaded");
+    Serial.println("Config loaded");
 
     wifiSSID = configManager.getWiFiSSID();
     password = configManager.getPassword();
@@ -126,46 +129,58 @@ void setup() {
     }
   }
 
-  while (isError) {}
+  //while (isError) { delay(1000); }
 }
 
 String jData;
 ArduinoJson::DeserializationError error;
 auto timer = millis();
-auto timer2 = millis();
+String tempMode = "";
+ColorRGB tempColor(0, 0, 0);
 
 void loop() {
 
-  // if (millis() - timer > 5000) {
-  //   timer = millis();
-  //   Serial.println("work");
-  // }
+  if (!isError) {
+    if (millis() - timer > FREQUENCY_CHECK_DATA_FROM_SERVER) {
+      timer = millis();
+      Serial.print("Data availability check...");
 
-  if (millis() - timer2 > 1000) {
-    timer2 = millis();
-    Serial.println("hasData?");
-    
-    if (webSocketsManager.hasData()) {
-      jData = webSocketsManager.getData();
-      webSocketsManager.clearData();
-      Serial.println(jData);
+      if (webSocketsManager.hasData()) {
 
-      // Parse JSON object
-      error = deserializeJson(dynamicJsonDocument, jData);
-      if (!error) {
-        Serial.println(("Response:"));
-        Serial.println(dynamicJsonDocument["mode"].as<String>());
-        Serial.println(dynamicJsonDocument["color"].as<String>());
-        webSocketsManager.sendData("123");
+        Serial.print((" has data -> "));
+
+        jData = webSocketsManager.getData();
+        Serial.println(jData);
+
+        // Parse JSON object
+        error = deserializeJson(dynamicJsonDocument, jData);
+
+        if (!error) {
+
+          tempMode = dynamicJsonDocument["mode"].as<String>();
+          tempColor.r = dynamicJsonDocument["color"]["r"].as<String>().toInt();
+          tempColor.g = dynamicJsonDocument["color"]["g"].as<String>().toInt();
+          tempColor.b = dynamicJsonDocument["color"]["b"].as<String>().toInt();
+
+          Serial.println(tempMode);
+          Serial.println(tempColor.r);
+          Serial.println(tempColor.g);
+          Serial.println(tempColor.b);
+
+          if (tempMode == "1") {
+            ledManager.addColor(tempColor);
+          } else if (tempMode == "2") {
+            ledManager.removeColor(tempColor);
+          }
+        } else {
+          Serial.println("Parsing failed!");
+        }
+
+        webSocketsManager.clearData();
       } else {
-        Serial.println("Parsing failed!");
+        Serial.println(" no data!");
       }
     }
-
-    // if (!isError) {
-    //   webSocketsManager.sendData("1234");
-    //   delay(5000);
-    // }
   }
 }
 

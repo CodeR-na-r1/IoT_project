@@ -1,7 +1,7 @@
 # python 3.10+ fastAPIserver
 
-# start server -> uvicorn server:app --host 192.168.0.15
-# start server -> uvicorn server:app --host 192.168.0.15 --ws-ping-interval 250
+# start server -> uvicorn server:app --host 192.168.0.10
+# start server -> uvicorn server:app --host 192.168.0.10 --ws-ping-interval 500
 
 # fastapi ping pong -> https://codematcher.com/questions/fastapi-websocket-ping-pong-timeout
 # esp library WebSockets not supported ping pong
@@ -48,7 +48,7 @@ async def websocket_endpoint(websocket: WebSocket, WiFiSSID: str):
         print(f"{bcolors.OKGREEN}Connected: {beacon_manager.clientsCount} beacons{bcolors.ENDC}")
 
         while True: 
-            await websocket.send_json({"mode" : "1", "color" : "123456"})
+            await websocket.send_json({"mode" : "1", "color" : {"r" : "12", "g" : "255", "b" : "123"}})
             data = await websocket.receive_text()   # просто поддерживаем подключение, общение в EspConnectionManager
             print(f"{WiFiSSID} -> {data}")
     except BeaconConnectionManagerException as e:
