@@ -15,7 +15,6 @@ from ClientConnectionManager import ClientConnectionManager, ClientConnectionMan
 
 from Console_colors import bcolors
 
-import json
 from random import randrange
 from time import sleep
 
@@ -24,7 +23,12 @@ app = FastAPI()
 beacon_manager = BeaconConnectionManager()
 client_manager = ClientConnectionManager()
 
-userColors = ["#FF0000", "#00FF00", "#0000FF", "#CC8899"]
+userColors = [
+                { "color1" : { "r" : "48", "g" : "213", "b" : "200" } }, # Бирюзовый
+                { "color2" : { "r" : "255", "g" : "77", "b" : "0" } },  # Киноварь (orange)
+                { "color3" : { "r" : "0", "g" : "255", "b" : "0" } },  # Лайм (green)
+                { "color4" : { "r" : "0", "g" : "127", "b" : "255" } },  # Лазурный, Азур (blue)
+             ]
 
 # get requests
 
@@ -49,7 +53,7 @@ async def websocket_endpoint(websocket: WebSocket, WiFiSSID: str):
 
         while True: 
             #await websocket.send_json({"mode" : "1", "color" : {"r" : "12", "g" : "255", "b" : "123"}})
-            data = await websocket.receive_text()   # просто поддерживаем подключение, общение в EspConnectionManager
+            data = await websocket.receive_text()   # просто поддерживаем подключение, общение в BeaconConnectionManager
             print(f"{WiFiSSID} -> {data}")
     except BeaconConnectionManagerException as e:
         print(f"{bcolors.FAIL}{e}{bcolors.ENDC}")
@@ -62,7 +66,8 @@ async def websocket_endpoint(websocket: WebSocket, WiFiSSID: str):
 @app.websocket("/android")
 async def websocket_endpoint(websocket: WebSocket):
     try:
-        color = userColors.pop(randrange(len(userColors)))
+        colorDict : dict = userColors.pop(randrange(len(userColors)))
+        color : str = str(colorDict)
 
         await client_manager.connect(websocket, color)
 
@@ -73,16 +78,16 @@ async def websocket_endpoint(websocket: WebSocket):
 
             if "intent" in data:
                 if data["intent"] == "getColor":
-                    await websocket.send_json({"color" : color})
+                    await websocket.send_json({"color" : colorDict})
                 elif data["intent"] == "activateBeacon":
                     try:
-                        await beacon_manager.notifyBeacon(data["beaconId"], color, True)
+                        await beacon_manager.notifyBeacon(data["beaconId"], colorDict[list(colorDict.keys())[0]], True)
                         await websocket.send_json({"status" : "OK"})
                     except Exception as e:
                         await websocket.send_json({"status" : "ERROR", "description" : f"{e}"})
                 elif data["intent"] == "deactivateBeacon":
                     try:
-                        await beacon_manager.notifyBeacon(data["beaconId"], color, False)
+                        await beacon_manager.notifyBeacon(data["beaconId"], colorDict[list(colorDict.keys())[0]], False)
                         await websocket.send_json({"status" : "OK"})
                     except Exception as e:
                         await websocket.send_json({"status" : "ERROR", "description" : f"{e}"})
@@ -101,6 +106,6 @@ async def websocket_endpoint(websocket: WebSocket):
 
     except WebSocketDisconnect:
         await client_manager.disconnect(color)
-        userColors.append(color)
+        userColors.append(colorDict)
 
         print(f"{bcolors.OKGREEN}Connected: {client_manager.clientsCount} clients{bcolors.ENDC}")

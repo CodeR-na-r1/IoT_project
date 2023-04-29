@@ -2,19 +2,33 @@
 
 ## Как запустить проект
 
-### Server python FastApi
+### > Server python FastApi
 
 desc
 
-### Esp beacon
+### > Esp beacon
 
 desc
 
-### Android client
+### > Android client
 
 desc
 
 ## Компоненты, библиотеки (список, способ установки)
+
+desc
+
+## Схемы работы программных частей:
+
+### > Server python FastApi
+
+desc
+
+### > Android client
+
+desc
+
+### > Esp beacon
 
 desc
 

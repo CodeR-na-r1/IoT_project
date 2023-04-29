@@ -17,13 +17,15 @@ class BeaconConnectionManager:
     async def connect(self, websocket: WebSocket, wifi_SSID: str):
         if wifi_SSID in self.active_connections:
             raise BeaconConnectionManagerException(f"Beacon {wifi_SSID} already connected!")
+        
         await websocket.accept()
+
         self.active_connections[wifi_SSID] = websocket
 
     async def disconnect(self, wifi_SSID: str):
         del self.active_connections[wifi_SSID]
 
-    async def notifyBeacon(self, wifi_SSID: str, color: str, isActivateIntent: bool):
+    async def notifyBeacon(self, wifi_SSID: str, color: dict, isActivateIntent: bool):
         data_mode: str = (self.MODES.ACTIVATE if isActivateIntent else self.MODES.DEACTIVATE).value
 
         data = {"mode" : data_mode, "color" : color}
