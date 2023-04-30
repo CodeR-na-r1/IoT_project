@@ -81,7 +81,7 @@ void setup() {
         Serial.println("Create websocket");
         webSocketsManager = WebSocketsManager(host, "/esp/" + WIFI_AP_NAMESPACE::wifiSSID, port);  // ?path see on server
 
-        int retVal = webSocketsManager.connect(true);
+        int retVal = webSocketsManager.connect(2, true);
         Serial.print("webSocketsManager.connect returns -> ");
         Serial.println(retVal);
 
@@ -160,6 +160,13 @@ void loop() {
   if (!isError) {
     if (millis() - timer > FREQUENCY_CHECK_DATA_FROM_SERVER) {
       timer = millis();
+
+      if (!webSocketsManager.isConnected()) {
+        Serial.print("WebSockets connection lost.\nESP will be reset");
+        delay(5000);
+        ESP.reset();
+      }
+
       Serial.print("Data availability check...");
 
       if (webSocketsManager.hasData()) {

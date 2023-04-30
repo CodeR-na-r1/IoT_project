@@ -1,8 +1,8 @@
-package com.mrx.questwithbeacons.retrofit.interfaces
+package com.mrx.questwithbeacons.data.retrofit.interfaces
 
 import com.mrx.questwithbeacons.CONSTANTS
-import com.mrx.questwithbeacons.models.BeaconsCount
-import com.mrx.questwithbeacons.models.BeaconsList
+import com.mrx.questwithbeacons.data.retrofit.models.BeaconsCount
+import com.mrx.questwithbeacons.data.retrofit.models.BeaconsList
 import retrofit2.http.GET
 
 interface RetrofitServices {

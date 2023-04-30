@@ -1,17 +1,19 @@
-package com.mrx.questwithbeacons
+package com.mrx.questwithbeacons.presentation
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.util.Log
 import android.view.View
 import android.widget.Toast
 import com.mrx.indoorservice.api.IndoorService
+import com.mrx.questwithbeacons.CONSTANTS
 import com.mrx.questwithbeacons.databinding.ActivityMainBinding
-import com.mrx.questwithbeacons.retrofit.RetrofitClient
-import com.mrx.questwithbeacons.retrofit.interfaces.RetrofitServices
+import com.mrx.questwithbeacons.data.retrofit.RetrofitClient
+import com.mrx.questwithbeacons.data.retrofit.interfaces.RetrofitServices
+import com.mrx.questwithbeacons.data.retrofit.models.BeaconsCount
+import com.mrx.questwithbeacons.data.retrofit.models.BeaconsList
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity() {
@@ -38,9 +40,12 @@ class MainActivity : AppCompatActivity() {
         val retrofit = RetrofitClient.getClient(CONSTANTS.URLS.BASE_URL)
         val retrofitAPI = retrofit.create(RetrofitServices::class.java)
 
-        CoroutineScope(handler).launch {
-            val bCount = retrofitAPI.getBeaconsCount()
-            val bList = retrofitAPI.getBeaconsList()
+        var bCount: BeaconsCount
+        var bList: BeaconsList
+
+        GlobalScope.launch(handler) {
+            bCount = retrofitAPI.getBeaconsCount()
+            bList = retrofitAPI.getBeaconsList()
 
             runOnUiThread {
                 binding.beaconsCount.text = "${bCount.BeaconsCount} ${bList.BeaconsList}"

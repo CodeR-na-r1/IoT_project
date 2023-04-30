@@ -56,7 +56,7 @@ async def websocket_endpoint(websocket: WebSocket, WiFiSSID: str):
             print(f"{WiFiSSID} -> {data}")
     except BeaconConnectionManagerException as e:
         print(f"{bcolors.FAIL}{e}{bcolors.ENDC}")
-    except WebSocketDisconnect:
+    finally:
         await beacon_manager.disconnect(WiFiSSID)
         print(f"{bcolors.OKGREEN}Connected: {beacon_manager.clientsCount} beacons{bcolors.ENDC}")
 
