@@ -162,9 +162,14 @@ void loop() {
       timer = millis();
 
       if (!webSocketsManager.isConnected()) {
-        Serial.print("WebSockets connection lost.\nESP will be reset");
-        delay(5000);
-        ESP.reset();
+        Serial.print("WebSockets connection lost.\nReconecting...\n");
+        int retVal = webSocketsManager.connect(2, true);
+        if (retVal != 0) {
+          Serial.print("WebSockets reconect failed.\nESP will be reset");
+          delay(5000);
+          ESP.reset();
+        }
+        Serial.println("WebSockets connection successfully restored");
       }
 
       Serial.print("Data availability check...");
