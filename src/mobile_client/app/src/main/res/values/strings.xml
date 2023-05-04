@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">QuestWithBeacons</string>
+    <string name="app_name">BeaconQuest</string>
 
 <!--    Text resources for StartFragment-->
 
@@ -11,6 +11,6 @@
     <string name="btnText">Start</string>
 
     <string name="viewHeaderInfoText">--- Beacons info ---</string>
-    <string name="viewBeaconsQuantityText">Beacons quantity: </string>
-    <string name="viewBeaconsIdText">Beacons ID: </string>
+    <string name="viewBeaconsQuantityText">Beacons quantity:  </string>
+    <string name="viewBeaconsIdText">Beacons ID:  </string>
 </resources>

@@ -1,4 +1,4 @@
-package com.mrx.questwithbeacons
+package com.mrx.beaconquest
 
 import org.junit.Test
 

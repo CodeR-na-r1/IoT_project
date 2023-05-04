@@ -1,10 +1,10 @@
-package com.mrx.questwithbeacons
+package com.mrx.beaconquest.presentation
 
 object CONSTANTS {
 
     object URLS {
 
-        const val BASE_URL = "http://192.168.0.10:8000"
+        const val BASE_URL = "http://192.168.0.12:8000"
         const val PATH_TO_COUNT_BEACONS = "BeaconsCount"
         const val PATH_TO_LIST_BEACONS = "BeaconsList"
 

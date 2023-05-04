@@ -1,6 +1,6 @@
-package com.mrx.questwithbeacons.domain.useCases
+package com.mrx.beaconquest.domain.useCases
 
-import com.mrx.questwithbeacons.domain.interfaces.GetBeaconsListInterface
+import com.mrx.beaconquest.domain.interfaces.GetBeaconsListInterface
 
 class GetBeaconsListUseCase(private val beaconsListManager: GetBeaconsListInterface) {
 
