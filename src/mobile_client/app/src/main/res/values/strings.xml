@@ -1,3 +1,16 @@
 <resources>
     <string name="app_name">QuestWithBeacons</string>
+
+<!--    Text resources for StartFragment-->
+
+    <string name="serverCheck">Server is checking</string>
+
+    <string name="serverFail">Server is not available</string>
+    <string name="serverSuccess">Server is available</string>
+
+    <string name="btnText">Start</string>
+
+    <string name="viewHeaderInfoText">--- Beacons info ---</string>
+    <string name="viewBeaconsQuantityText">Beacons quantity: </string>
+    <string name="viewBeaconsIdText">Beacons ID: </string>
 </resources>
