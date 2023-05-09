@@ -1,7 +1,7 @@
 # python 3.10+ fastAPIserver
 
 # start server -> uvicorn server:app --host 192.168.0.10
-# start server -> uvicorn server:app --host 192.168.0.10 --ws-ping-interval 500
+# start server -> uvicorn server:app --host 192.168.0.11 --ws-ping-interval 19999
 
 # fastapi ping pong -> https://codematcher.com/questions/fastapi-websocket-ping-pong-timeout
 # esp library WebSockets not supported ping pong

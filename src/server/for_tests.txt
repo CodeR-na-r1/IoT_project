@@ -50,3 +50,16 @@ ws5.onmessage = function(event) {
     console.log(JSON.stringify(event.data));
     console.log(JSON.parse(event.data));
 }
+
+-------------- android взаимодействие -----------
+
+var ws1 = new WebSocket(`ws://192.168.0.11:8000/android`);
+ws1.onmessage = function(event) {
+    console.log(JSON.stringify(event.data));
+    console.log(JSON.parse(event.data));
+}
+ws1.send('{"intent" : "getColor"}')
+
+ws1.send('{"intent" : "activateBeacon", "beaconId" : "ESP_9D:61:84"}')
+
+ws1.send('{"intent" : "deactivateBeacon", "beaconId" : "ESP_9D:61:84"}')

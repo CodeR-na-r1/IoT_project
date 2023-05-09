@@ -13,4 +13,11 @@
     <string name="viewHeaderInfoText">--- Beacons info ---</string>
     <string name="viewBeaconsQuantityText">Beacons quantity:  </string>
     <string name="viewBeaconsIdText">Beacons ID:  </string>
+
+    <!--    Text resources for QuestProgressFragment-->
+
+    <string name="viewNowBeaconActiveText">Now beacon -> </string>
+
+    <string name="buttonCommitBeaconText">Подтвердить</string>
+
 </resources>

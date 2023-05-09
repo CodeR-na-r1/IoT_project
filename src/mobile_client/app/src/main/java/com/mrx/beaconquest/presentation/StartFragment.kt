@@ -71,7 +71,7 @@ class StartFragment(private val _context: Context) : Fragment() {
     private val buttonObserver: (View) -> Unit = { _: View ->
         if (this.bCountLive.value?.BeaconsCount!!.toInt() > 0 && this.statusServerLive.value == SERVER_OK) {
             handler.removeCallbacks(updateDataRunnable)
-            parentFragmentManager.beginTransaction().replace(R.id.frameLayout, QuestProgressFragment.newInstance()).commit()
+            parentFragmentManager.beginTransaction().replace(R.id.frameLayout, QuestProgressFragment.newInstance(__context = _context, __beaconsList = this.bListLive.value!!)).commit()
         }
         else {
             if (this.statusServerLive.value != SERVER_OK) {
