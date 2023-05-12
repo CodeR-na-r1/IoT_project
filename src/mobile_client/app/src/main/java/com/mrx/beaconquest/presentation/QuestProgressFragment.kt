@@ -3,12 +3,13 @@ package com.mrx.beaconquest.presentation
 import android.annotation.SuppressLint
 import android.content.Context
 import android.os.Bundle
+import android.util.Log
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.lifecycle.LifecycleOwner
-import com.mrx.beaconquest.R
+import androidx.lifecycle.MutableLiveData
 import com.mrx.beaconquest.data.retrofit.models.BeaconsList
 import com.mrx.beaconquest.databinding.FragmentQuestProgressBinding
 import com.mrx.indoorservice.api.IndoorService
@@ -22,8 +23,10 @@ class QuestProgressFragment(private val _context: Context, private val _beaconsL
 
     lateinit var binding: FragmentQuestProgressBinding
 
+    private val webSocket by lazy { WebServicesProvider.getInstance() }
+
     private val indoorService by lazy { IndoorService.getInstance(context = _context) }
-    private var nowBeacon: String? = null
+    private var nowBeacon: MutableLiveData<String?> = MutableLiveData(null)
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         binding = FragmentQuestProgressBinding.inflate(layoutInflater)
@@ -35,6 +38,10 @@ class QuestProgressFragment(private val _context: Context, private val _beaconsL
         super.onViewCreated(view, savedInstanceState)
 
 //        toDo create sockets and connect
+        webSocket.send("{\"intent\" : \"getColor\"}")
+        WebServicesProvider.getLiveResponse().observe(this as LifecycleOwner) {
+            Log.d(CONSTANTS.TAG, "Message from Websockets -> $it")
+        }
 
         indoorService.WiFiBeaconsEnvironment.setScanInterval(1700L)
         indoorService.WiFiBeaconsEnvironment.addSSIDFilterForSpecificScan(this._beaconsList.BeaconsList)
@@ -48,39 +55,40 @@ class QuestProgressFragment(private val _context: Context, private val _beaconsL
         super.onDestroyView()
 
         indoorService.WiFiBeaconsEnvironment.stopSpecificScanning()
+        webSocket.close(0, null)
     }
 
     @SuppressLint("SetTextI18n")
     private val wifiScanObserver = { newData: Collection<WiFiBeaconsEnvironmentInfo> ->
 
-        if (newData.isNotEmpty()) {
-
-            val elem = newData.minBy { it.rssi }
-            if (nowBeacon != null) {
-                if (elem.rssi <= CONSTANTS.BEACONS.MIN_RSSI && nowBeacon != elem.ssid) {
-                    // toDo deactive old beacon
-                    nowBeacon = elem.ssid
-                    // toDo activate new beacon
-                }
-                else if ((newData.find { it.ssid == nowBeacon }?.rssi ?: CONSTANTS.BEACONS.MAX_RSSI) >= CONSTANTS.BEACONS.MAX_RSSI) {
-                    // toDo deactivate beacon
-                    nowBeacon = null
-                }
-            }
-            else {
-                true
-            }
-
-            if (elem.rssi < CONSTANTS.BEACONS.MIN_RSSI) {
-                if (elem.ssid != nowBeacon) {
-                    // deactivate beacon
-                }
-            }
-        }
-        else {
-            nowBeacon = null
-            binding.viewNowActiveBeacon.text = resources.getString(R.string.viewNowBeaconActiveText) + " None"
-        }
+//        if (newData.isNotEmpty()) {
+//
+//            val elem = newData.minBy { it.rssi }
+//            if (nowBeacon != null) {
+//                if (elem.rssi <= CONSTANTS.BEACONS.MIN_RSSI && nowBeacon != elem.ssid) {
+//                    // toDo deactive old beacon
+//                    nowBeacon = elem.ssid
+//                    // toDo activate new beacon
+//                }
+//                else if ((newData.find { it.ssid == nowBeacon }?.rssi ?: CONSTANTS.BEACONS.MAX_RSSI) >= CONSTANTS.BEACONS.MAX_RSSI) {
+//                    // toDo deactivate beacon
+//                    nowBeacon = null
+//                }
+//            }
+//            else {
+//                true
+//            }
+//
+//            if (elem.rssi < CONSTANTS.BEACONS.MIN_RSSI) {
+//                if (elem.ssid != nowBeacon) {
+//                    // deactivate beacon
+//                }
+//            }
+//        }
+//        else {
+//            nowBeacon = null
+//            binding.viewNowActiveBeacon.text = resources.getString(R.string.viewNowBeaconActiveText) + " None"
+//        }
 
 
     }

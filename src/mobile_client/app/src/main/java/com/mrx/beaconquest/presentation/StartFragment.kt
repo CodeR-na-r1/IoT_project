@@ -131,10 +131,6 @@ class StartFragment(private val _context: Context) : Fragment() {
 
         updateBeaconsData()
 
-        if (this.statusServerLive.value != SERVER_ERROR) {
-            this.statusServerLive.value = SERVER_OK
-        }
-
         Log.d("myTag", "data updated")
 
         updateDataSchedule()
@@ -159,6 +155,7 @@ class StartFragment(private val _context: Context) : Fragment() {
             activity?.runOnUiThread {
                 bCountLive.value = tempCount
                 bListLive.value = tempList
+                statusServerLive.value = SERVER_OK
             }
         }
     }
