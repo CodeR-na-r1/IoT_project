@@ -77,7 +77,7 @@ async def websocket_endpoint(websocket: WebSocket):
 
             if "intent" in data:
                 if data["intent"] == "getColor":
-                    await websocket.send_json({"color" : colorDict})
+                    await websocket.send_json({"color" : colorDict[list(colorDict.keys())[0]]})
                 elif data["intent"] == "activateBeacon":
                     try:
                         await beacon_manager.notifyBeacon(data["beaconId"], colorDict[list(colorDict.keys())[0]], True)

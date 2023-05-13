@@ -8,12 +8,15 @@ import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.MutableLiveData
+import com.mrx.beaconquest.R
 import com.mrx.beaconquest.data.retrofit.models.BeaconsList
 import com.mrx.beaconquest.databinding.FragmentQuestProgressBinding
 import com.mrx.indoorservice.api.IndoorService
 import com.mrx.indoorservice.domain.model.WiFiBeaconsEnvironmentInfo
+import org.json.JSONObject
 
 class QuestProgressFragment(private val _context: Context, private val _beaconsList: BeaconsList) : Fragment() {
 
@@ -21,12 +24,13 @@ class QuestProgressFragment(private val _context: Context, private val _beaconsL
         fun newInstance(__context: Context, __beaconsList: BeaconsList) = QuestProgressFragment(_context = __context, _beaconsList = __beaconsList)
     }
 
-    lateinit var binding: FragmentQuestProgressBinding
+    private lateinit var binding: FragmentQuestProgressBinding
 
     private val webSocket by lazy { WebServicesProvider.getInstance() }
 
     private val indoorService by lazy { IndoorService.getInstance(context = _context) }
     private var nowBeacon: MutableLiveData<String?> = MutableLiveData(null)
+    private val remainingBeacons = _beaconsList.BeaconsList
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         binding = FragmentQuestProgressBinding.inflate(layoutInflater)
@@ -37,16 +41,16 @@ class QuestProgressFragment(private val _context: Context, private val _beaconsL
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-//        toDo create sockets and connect
+        // create sockets and connect
+        WebServicesProvider.getLiveResponse().observe(this as LifecycleOwner, webSocketObserver)
         webSocket.send("{\"intent\" : \"getColor\"}")
-        WebServicesProvider.getLiveResponse().observe(this as LifecycleOwner) {
-            Log.d(CONSTANTS.TAG, "Message from Websockets -> $it")
-        }
 
-        indoorService.WiFiBeaconsEnvironment.setScanInterval(1700L)
+        indoorService.WiFiBeaconsEnvironment.setScanInterval(17000L)
         indoorService.WiFiBeaconsEnvironment.addSSIDFilterForSpecificScan(this._beaconsList.BeaconsList)
         indoorService.WiFiBeaconsEnvironment.getSpecificScanViewModel().observe(this as LifecycleOwner, wifiScanObserver)
         indoorService.WiFiBeaconsEnvironment.startSpecificScanning()
+
+        nowBeacon.observe(this as LifecycleOwner, changeNowBeaconObserver)
 
         binding.btnCommitBeacon.setOnClickListener(this.btnCommitBeaconObserver)
     }
@@ -58,43 +62,83 @@ class QuestProgressFragment(private val _context: Context, private val _beaconsL
         webSocket.close(0, null)
     }
 
-    @SuppressLint("SetTextI18n")
-    private val wifiScanObserver = { newData: Collection<WiFiBeaconsEnvironmentInfo> ->
+    private val webSocketObserver: ((String) -> Unit) = { data: String ->
 
-//        if (newData.isNotEmpty()) {
-//
-//            val elem = newData.minBy { it.rssi }
-//            if (nowBeacon != null) {
-//                if (elem.rssi <= CONSTANTS.BEACONS.MIN_RSSI && nowBeacon != elem.ssid) {
-//                    // toDo deactive old beacon
-//                    nowBeacon = elem.ssid
-//                    // toDo activate new beacon
-//                }
-//                else if ((newData.find { it.ssid == nowBeacon }?.rssi ?: CONSTANTS.BEACONS.MAX_RSSI) >= CONSTANTS.BEACONS.MAX_RSSI) {
-//                    // toDo deactivate beacon
-//                    nowBeacon = null
-//                }
-//            }
-//            else {
-//                true
-//            }
-//
-//            if (elem.rssi < CONSTANTS.BEACONS.MIN_RSSI) {
-//                if (elem.ssid != nowBeacon) {
-//                    // deactivate beacon
-//                }
-//            }
-//        }
-//        else {
-//            nowBeacon = null
-//            binding.viewNowActiveBeacon.text = resources.getString(R.string.viewNowBeaconActiveText) + " None"
-//        }
+        Log.d(CONSTANTS.TAG, "Recieve data -> $data")
 
+        if (data.contains("status")) {
+            val obj = JSONObject(data)
+            if (obj.getString("status") == "ERROR") {
+                Toast.makeText(context, "Error request on server -> ${obj.getString("description")}", Toast.LENGTH_LONG).show()
+            } else {
+                Toast.makeText(context, "Request successful", Toast.LENGTH_LONG).show()
+            }
+        }
+        else if (data.contains("color")) {
+            Log.d(CONSTANTS.TAG, "Get color $data")
+            // toDo show user color
+//            val obj = JSONObject(data).getJSONObject("color")
+//            binding.userColorBtn.setBackgroundColor(color)
+        }
+        else {
+            Toast.makeText(context, "Unknown response!", Toast.LENGTH_LONG).show()
+            Log.d(CONSTANTS.TAG, "Unknown response!")
+        }
 
     }
 
-    private val btnCommitBeaconObserver = { _: View ->
+    private val wifiScanObserver: ((Collection<WiFiBeaconsEnvironmentInfo>) -> Unit) = { _newData: Collection<WiFiBeaconsEnvironmentInfo> ->
 
+        Log.d(CONSTANTS.TAG, "wifiScanObserver -> data size = ${_newData.size}")
+
+        val newData = _newData.map { WiFiBeaconsEnvironmentInfo(it.ssid, -it.rssi) }    // invert rssi
+
+        if (newData.isNotEmpty()) {
+
+            Log.d(CONSTANTS.TAG, "newData isNotEmpty!")
+
+            val elem = (newData.filter { remainingBeacons.contains(it.ssid) })
+                .minBy { it.rssi }
+
+            Log.d(CONSTANTS.TAG, "elem = ${elem.ssid} -> ${elem.rssi}!")
+
+            if (nowBeacon.value != null) {
+                if (elem.rssi <= CONSTANTS.BEACONS.MIN_RSSI && nowBeacon.value != elem.ssid) {
+                    Log.d(CONSTANTS.TAG, "beacon replaced 1")
+                    webSocket.send("{\"intent\" : \"deactivateBeacon\", \"beaconId\" : \"${nowBeacon.value}\"}")
+                    nowBeacon.value = elem.ssid
+                    webSocket.send("{\"intent\" : \"activateBeacon\", \"beaconId\" : \"${nowBeacon.value}\"}")
+                }
+                else if ((newData.find { it.ssid == nowBeacon.value }?.rssi ?: CONSTANTS.BEACONS.MAX_RSSI) >= CONSTANTS.BEACONS.MAX_RSSI) {
+                    Log.d(CONSTANTS.TAG, "beacon deactivated 2")
+                    webSocket.send("{\"intent\" : \"deactivateBeacon\", \"beaconId\" : \"${nowBeacon.value}\"}")
+                    nowBeacon.value = null
+                }
+            }
+            else {
+                if (elem.rssi <= CONSTANTS.BEACONS.MIN_RSSI) {
+                    Log.d(CONSTANTS.TAG, "beacon activated 3")
+                    nowBeacon.value = elem.ssid
+                    webSocket.send("{\"intent\" : \"activateBeacon\", \"beaconId\" : \"${nowBeacon.value}\"}")
+                }
+            }
+        }
+        else if (nowBeacon.value != null) {
+            Log.d(CONSTANTS.TAG, "beacon deactivated 4")
+            webSocket.send("{\"intent\" : \"deactivateBeacon\", \"beaconId\" : \"${nowBeacon.value}\"}")
+            nowBeacon.value = null
+        }
+
+    }
+
+    @SuppressLint("SetTextI18n")
+    private val changeNowBeaconObserver: ((String?) -> Unit) = {
+        binding.viewNowActiveBeacon.text = resources.getString(R.string.viewNowBeaconActiveText) + " ${nowBeacon.value}"
+    }
+
+    private val btnCommitBeaconObserver = { _: View ->
+        // не забыть удалить маячок из списка пройденных маячков
+        // а лучше просто убирать маячок из маски библиотеки которая отбираеть маячки
     }
 
 }
