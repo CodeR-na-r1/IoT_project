@@ -6,8 +6,8 @@ object CONSTANTS {
 
     object BEACONS {
 
-        const val MIN_RSSI = 65
-        const val MAX_RSSI = 75
+        const val MIN_RSSI = 53
+        const val MAX_RSSI = 55
 
     }
 

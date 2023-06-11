@@ -45,7 +45,7 @@ class QuestProgressFragment(private val _context: Context, private val _beaconsL
         WebServicesProvider.getLiveResponse().observe(this as LifecycleOwner, webSocketObserver)
         webSocket.send("{\"intent\" : \"getColor\"}")
 
-        indoorService.WiFiBeaconsEnvironment.setScanInterval(17000L)
+        indoorService.WiFiBeaconsEnvironment.setScanInterval(2200L)
         indoorService.WiFiBeaconsEnvironment.addSSIDFilterForSpecificScan(this._beaconsList.BeaconsList)
         indoorService.WiFiBeaconsEnvironment.getSpecificScanViewModel().observe(this as LifecycleOwner, wifiScanObserver)
         indoorService.WiFiBeaconsEnvironment.startSpecificScanning()
@@ -64,7 +64,7 @@ class QuestProgressFragment(private val _context: Context, private val _beaconsL
 
     private val webSocketObserver: ((String) -> Unit) = { data: String ->
 
-        Log.d(CONSTANTS.TAG, "Recieve data -> $data")
+        Log.d(CONSTANTS.TAG, "Receive data -> $data")
 
         if (data.contains("status")) {
             val obj = JSONObject(data)
@@ -101,6 +101,7 @@ class QuestProgressFragment(private val _context: Context, private val _beaconsL
                 .minBy { it.rssi }
 
             Log.d(CONSTANTS.TAG, "elem = ${elem.ssid} -> ${elem.rssi}!")
+//            Toast.makeText(context, "elem = ${elem.ssid} -> ${elem.rssi}!", Toast.LENGTH_SHORT).show()
 
             if (nowBeacon.value != null) {
                 if (elem.rssi <= CONSTANTS.BEACONS.MIN_RSSI && nowBeacon.value != elem.ssid) {

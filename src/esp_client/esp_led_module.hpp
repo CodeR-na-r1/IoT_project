@@ -15,7 +15,9 @@
 #define LED_PIN 5  // GPIO5 -> D1
 #endif
 
-#define LED_NUM 12
+#ifndef LED_NUM
+#define LED_NUM 20
+#endif
 
 CRGB leds[LED_NUM];
 

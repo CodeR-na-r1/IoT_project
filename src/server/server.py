@@ -1,7 +1,7 @@
 # python 3.10+ fastAPIserver
 
 # start server -> uvicorn server:app --host 192.168.0.10
-# start server -> uvicorn server:app --host 192.168.0.11 --ws-ping-interval 19999
+# start server -> uvicorn server:app --host 192.168.0.13 --ws-ping-interval 19999
 
 # fastapi ping pong -> https://codematcher.com/questions/fastapi-websocket-ping-pong-timeout
 # esp library WebSockets not supported ping pong
@@ -56,7 +56,10 @@ async def websocket_endpoint(websocket: WebSocket, WiFiSSID: str):
             print(f"{WiFiSSID} -> {data}")
     except BeaconConnectionManagerException as e:
         print(f"{bcolors.FAIL}{e}{bcolors.ENDC}")
+    except Exception as e:
+        print(f"Other exception -> {e}")
     finally:
+        print(f"{bcolors.FAIL}Beacon {WiFiSSID} disconnected{bcolors.ENDC}")
         await beacon_manager.disconnect(WiFiSSID)
         print(f"{bcolors.OKGREEN}Connected: {beacon_manager.clientsCount} beacons{bcolors.ENDC}")
 
@@ -80,16 +83,19 @@ async def websocket_endpoint(websocket: WebSocket):
                     await websocket.send_json({"color" : colorDict[list(colorDict.keys())[0]]})
                 elif data["intent"] == "activateBeacon":
                     try:
+                        print(f"Client {color} activate beacon")   
                         await beacon_manager.notifyBeacon(data["beaconId"], colorDict[list(colorDict.keys())[0]], True)
                         await websocket.send_json({"status" : "OK"})
                     except Exception as e:
                         await websocket.send_json({"status" : "ERROR", "description" : f"{e}"})
                 elif data["intent"] == "deactivateBeacon":
                     try:
+                        print(f"Client {color} deactivate beacon")
                         await beacon_manager.notifyBeacon(data["beaconId"], colorDict[list(colorDict.keys())[0]], False)
                         await websocket.send_json({"status" : "OK"})
                     except Exception as e:
                         await websocket.send_json({"status" : "ERROR", "description" : f"{e}"})
+                        print(f"Client [{color} {bcolors.FAIL}DISCONNECTED{bcolors.ENDC} -> {e}")
 
     except ValueError:
         await websocket.accept()

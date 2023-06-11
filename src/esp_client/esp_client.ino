@@ -1,9 +1,10 @@
 // MAIN FILE HERE
 
-#define FREQUENCY_CHECK_DATA_FROM_SERVER 10000  // ms
+#define FREQUENCY_CHECK_DATA_FROM_SERVER 200  // ms
 
-#define FREQUENCY_UPDATE_LED_FOR_LOADING 250  // ms
-#define FREQUENCY_UPDATE_LED_FOR_WORK 45      // ms
+#define FREQUENCY_UPDATE_LED_FOR_LOADING 300  // ms
+#define FREQUENCY_UPDATE_LED_FOR_WORK 40      // ms
+#define LED_NUM 21
 #define LED_PIN 5                             // GPIO5 -> D1
 
 #define JSON_BUFER_CAPACITY 256  // bytes
@@ -128,7 +129,6 @@ void setup() {
 
   if (isError) {
     ticker.detach();
-    ledManager.showColor(ColorRGB(255, 0, 0));
 
     SERVER_NAMESPACE::setData(wifiSSID, password, host, port);
     SERVER_NAMESPACE::setErrorDescription(errorDescription);
@@ -140,6 +140,8 @@ void setup() {
 
       SERVER_NAMESPACE::setUserCallback(serverCallback);
       Serial.println("setUserCallback is set");
+      
+      ledManager.showColor(ColorRGB(255, 0, 0));
     } else {
       Serial.print("Server started, with error, retValue -> ");
       Serial.println(ret);
@@ -163,7 +165,7 @@ void loop() {
 
       if (!webSocketsManager.isConnected()) {
         Serial.print("WebSockets connection lost.\nReconecting...\n");
-        int retVal = webSocketsManager.connect(2, true);
+        int retVal = webSocketsManager.connect(3, true);
         if (retVal != 0) {
           Serial.print("WebSockets reconect failed.\nESP will be reset");
           delay(5000);
